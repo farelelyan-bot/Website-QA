@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ragnarok Online - QA Task Notes</title>
+  <style>
+    body {
+      font-family: "Trebuchet MS", Georgia, serif;
+      background: radial-gradient(circle at top, #1e293b, #020617);
+      color: #f8fafc;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: linear-gradient(180deg, #facc15, #a16207);
+      padding: 20px;
+      text-align: center;
+      border-bottom: 4px solid #78350f;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: 2px;
+      text-shadow: 2px 2px 4px #000;
+    }
+    header p {
+      margin: 6px 0 0;
+      font-style: italic;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 32px auto;
+      background: linear-gradient(180deg, #020617, #0f172a);
+      padding: 28px;
+      border-radius: 16px;
+      border: 2px solid #a16207;
+      box-shadow: 0 0 25px rgba(250,204,21,0.15);
+    }
+    h2 {
+      margin-top: 0;
+      border-bottom: 1px solid #a16207;
+      padding-bottom: 8px;
+      color: #fde68a;
+    }
+    label {
+      display: block;
+      margin-top: 14px;
+      font-weight: bold;
+      color: #fcd34d;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      border-radius: 10px;
+      border: 1px solid #a16207;
+      outline: none;
+      background: #020617;
+      color: #f8fafc;
+    }
+    button {
+      margin-top: 18px;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #facc15, #ca8a04);
+      color: #1c1917;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+    }
+    button:hover {
+      background: linear-gradient(180deg, #fde047, #eab308);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 26px;
+      background: #020617;
+    }
+    table th, table td {
+      border: 1px solid #a16207;
+      padding: 12px;
+      text-align: center;
+    }
+    table th {
+      background: #78350f;
+      color: #fde68a;
+    }
+    .delete-btn {
+      background: linear-gradient(180deg, #dc2626, #991b1b);
+      color: #fff;
+    }
+    footer {
+      text-align: center;
+      margin: 32px 0 16px;
+      font-size: 14px;
+      color: #fcd34d;
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN PAGE -->
+<div id="loginPage" class="container" style="max-width:500px; margin-top:80px;">
+  <h2>🔐 Login QA Ragnarok</h2>
+
+  <label>Username QA</label>
+  <input type="text" id="username" placeholder="Masukkan username QA" />
+
+  <label>Password</label>
+  <input type="password" id="password" placeholder="Masukkan password" />
+
+  <button onclick="login()">⚔️ Login</button>
+</div>
+
+<!-- MAIN PAGE (VIEW ONLY) -->
+<div id="mainPage" style="display:none;">
+  <header>
+    <h1>Ragnarok Online</h1>
+    <p>QA Fantasy Quest Viewer</p>
+  </header>
+
+  <div class="container">
+    <h2>📖 Daftar Quest QA</h2>
+    <button onclick="openEditor()">➕ Edit / Tambah Quest</button>
+    <table>
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>Quest / Update</th>
+          <th>Game</th>
+          <th>Status</th>
+          <th>Progress</th>
+          <th>Deadline</th>
+        </tr>
+      </thead>
+      <tbody id="taskTable"></tbody>
+    </table>
+
+    <button style="margin-top:24px" onclick="logout()">🚪 Logout</button>
+  </div>
+</div>
+
+<!-- EDITOR PAGE -->
+<div id="editorPage" style="display:none;">
+  <header>
+    <h1>Ragnarok Online</h1>
+    <p>QA Quest Editor</p>
+  </header>
+
+  <div class="container">
+    <h2>📝 Catatan Tugas QA</h2>
+
+    <label>Quest / Update</label>
+    <input type="text" id="editUpdate" />
+
+    <label>Game</label>
+    <input type="text" id="editGame" value="Ragnarok Online" />
+
+    <label>Status</label>
+    <select id="editStatus">
+      <option>Belum Dikerjakan</option>
+      <option>Dalam Proses</option>
+      <option>Selesai</option>
+    </select>
+
+    <label>Progress (%)</label>
+    <input type="number" id="editPercent" min="0" max="100" />
+
+    <label>Deadline</label>
+    <input type="date" id="editDeadline" />
+
+    <button onclick="saveQuest()">💾 Simpan Quest</button>
+    <button onclick="closeEditor()">⬅️ Kembali</button>
+
+    <h2 style="margin-top:40px">📖 Daftar Quest (Editor)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>Quest / Update</th>
+          <th>Game</th>
+          <th>Status</th>
+          <th>Progress</th>
+          <th>Deadline</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="editorTable"></tbody>
+    </table>
+  </div>
+</div>
+
+<footer>
+    &copy; 2026 QA Ragnarok Online — Quest Viewer
+  </footer>
+
+<script>
+  // ================= AUTH =================
+  const AUTH_KEY = 'qaLoggedIn';
+
+  function login() {
+    const user = document.getElementById('username').value.trim();
+    const pass = document.getElementById('password').value.trim();
+
+    if (user === 'qa' && pass === 'ragnarok') {
+      localStorage.setItem(AUTH_KEY, 'true');
+      showMainPage();
+    } else {
+      alert('Username atau password salah');
+    }
+  }
+
+  function logout() {
+    localStorage.removeItem(AUTH_KEY);
+    location.reload();
+  }
+
+  function showMainPage() {
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('mainPage').style.display = 'block';
+    document.getElementById('editorPage').style.display = 'none';
+    renderTasks();
+  }
+
+  // ================= DATA =================
+  let tasks = JSON.parse(localStorage.getItem('qaTasks')) || [];
+
+  function saveStorage() {
+    localStorage.setItem('qaTasks', JSON.stringify(tasks));
+  }
+
+  function renderTasks() {
+    const table = document.getElementById('taskTable');
+    table.innerHTML = '';
+
+    // Urutkan berdasarkan deadline terdekat (tanggal terendah)
+    const sortedTasks = [...tasks].sort((a, b) => {
+      return new Date(a.deadline) - new Date(b.deadline);
+    });
+
+    sortedTasks.forEach((task, index) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${index + 1}</td>
+        <td>${task.update}</td>
+        <td>${task.game}</td>
+        <td>${task.status}</td>
+        <td>${task.percent}%</td>
+        <td>${task.deadline}</td>
+      `;
+      table.appendChild(row);
+    });
+  }
+
+  let editIndex = null;
+
+  // ================= EDITOR =================
+  function openEditor() {
+    document.getElementById('editorPage').style.display = 'block';
+    document.getElementById('mainPage').style.display = 'none';
+    renderEditorTable();
+  }
+
+  function closeEditor() {
+    document.getElementById('editorPage').style.display = 'none';
+    document.getElementById('mainPage').style.display = 'block';
+    renderTasks();
+  }
+
+  function saveQuest() {
+    const quest = {
+      update: document.getElementById('editUpdate').value,
+      game: document.getElementById('editGame').value,
+      status: document.getElementById('editStatus').value,
+      percent: document.getElementById('editPercent').value,
+      deadline: document.getElementById('editDeadline').value
+    };
+
+    if (!quest.update || quest.percent === '' || !quest.deadline) {
+      alert('Data quest belum lengkap');
+      return;
+    }
+
+    if (editIndex === null) {
+      // tambah quest baru
+      tasks.push(quest);
+    } else {
+      // update quest yang diedit
+      tasks[editIndex] = quest;
+    }
+
+    saveStorage();
+
+    // reset form & mode edit
+    editIndex = null;
+    document.getElementById('editUpdate').value = '';
+    document.getElementById('editPercent').value = '';
+    document.getElementById('editDeadline').value = '';
+
+    // refresh tabel editor & viewer
+    renderEditorTable();
+    renderTasks();
+  }
+
+  function editQuest(index) {
+    const q = tasks[index];
+    editIndex = index;
+
+    document.getElementById('editUpdate').value = q.update;
+    document.getElementById('editGame').value = q.game;
+    document.getElementById('editStatus').value = q.status;
+    document.getElementById('editPercent').value = q.percent;
+    document.getElementById('editDeadline').value = q.deadline;
+
+    document.getElementById('editorPage').style.display = 'block';
+    document.getElementById('mainPage').style.display = 'none';
+  }
+
+  function deleteQuest(index) {
+    if (confirm('Hapus quest ini?')) {
+      tasks.splice(index, 1);
+      editIndex = null;
+      saveStorage();
+      renderEditorTable();
+      renderTasks();
+    }
+  }
+
+  function renderEditorTable() {
+    const table = document.getElementById('editorTable');
+    table.innerHTML = '';
+
+    tasks.forEach((task, index) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${index + 1}</td>
+        <td>${task.update}</td>
+        <td>${task.game}</td>
+        <td>${task.status}</td>
+        <td>${task.percent}%</td>
+        <td>${task.deadline}</td>
+        <td>
+          <button onclick="editQuest(${index})">✏️ Edit</button>
+          <button class="delete-btn" onclick="deleteQuest(${index})">🗑 Hapus</button>
+        </td>
+      `;
+      table.appendChild(row);
+    });
+  }
+
+  // ================= INIT =================
+if (localStorage.getItem(AUTH_KEY) === 'true') {
+  showMainPage();
+}
+</script>
